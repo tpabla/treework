@@ -7,8 +7,10 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 // Call records one git invocation.
@@ -36,6 +38,17 @@ func (r *ExecRunner) Run(ctx context.Context, dir string, args ...string) (strin
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
+	// git spawns ssh, which can outlive it holding the output pipes open.
+	// Without a delay Wait blocks on those pipes even after cancellation.
+	cmd.WaitDelay = 2 * time.Second
+	// Never let git or ssh prompt: a prompt on /dev/tty is invisible under
+	// the alt-screen TUI and would block forever. An explicit
+	// GIT_SSH_COMMAND is left alone so custom ssh setups keep working.
+	env := append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
+	if os.Getenv("GIT_SSH_COMMAND") == "" {
+		env = append(env, "GIT_SSH_COMMAND=ssh -o BatchMode=yes")
+	}
+	cmd.Env = env
 	if err := cmd.Run(); err != nil {
 		return "", fmt.Errorf("git %s: %w: %s", strings.Join(args, " "), err, strings.TrimSpace(stderr.String()))
 	}

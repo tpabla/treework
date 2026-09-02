@@ -230,3 +230,40 @@ func TestConfirmNoGoesBack(t *testing.T) {
 		t.Fatalf("n should return to repos, state = %v", m.State())
 	}
 }
+
+// ctrl+c must quit from every screen, including while a plan is running.
+// Regression: StateRunning previously handled no keys at all, so a slow
+// git command left the TUI unresponsive.
+func TestCtrlCQuitsFromEveryState(t *testing.T) {
+	states := []State{StateProjects, StateNewName, StateRepos, StateConfirm, StateRunning, StateDone}
+	for _, st := range states {
+		m, _ := newTestModel(t)
+		m.state = st
+		_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyCtrlC})
+		if cmd == nil {
+			t.Fatalf("state %d: ctrl+c returned no command, want tea.Quit", st)
+		}
+		if msg := cmd(); msg == nil {
+			t.Fatalf("state %d: ctrl+c command produced no message, want tea.QuitMsg", st)
+		} else if _, ok := msg.(tea.QuitMsg); !ok {
+			t.Fatalf("state %d: ctrl+c produced %T, want tea.QuitMsg", st, msg)
+		}
+	}
+}
+
+// ctrl+c must also cancel the context handed to in-flight git commands.
+func TestCtrlCCancelsRunContext(t *testing.T) {
+	m, _ := newTestModel(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	m.ctx, m.cancel = ctx, cancel
+	m.state = StateRunning
+
+	m.Update(tea.KeyMsg{Type: tea.KeyCtrlC})
+
+	select {
+	case <-ctx.Done():
+	default:
+		t.Fatal("ctrl+c did not cancel the run context")
+	}
+}

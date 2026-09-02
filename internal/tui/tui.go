@@ -67,6 +67,11 @@ type Model struct {
 	nameInput textinput.Model
 	inputErr  string
 
+	// ctx governs in-flight git work so quitting can cancel it. Nil when
+	// a Model is built outside Run (tests), which then uses Background.
+	ctx    context.Context
+	cancel context.CancelFunc
+
 	project    string
 	attached   map[string]bool
 	repoNames  []string
@@ -123,7 +128,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// runContext is the context for git work; Background when unset.
+func (m Model) runContext() context.Context {
+	if m.ctx != nil {
+		return m.ctx
+	}
+	return context.Background()
+}
+
 func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	// Handled before the per-state switch so ctrl+c always quits, including
+	// during StateRunning, and cancels any git command still in flight.
+	if msg.Type == tea.KeyCtrlC {
+		if m.cancel != nil {
+			m.cancel()
+		}
+		return m, tea.Quit
+	}
 	switch m.state {
 	case StateProjects:
 		return m.updateProjects(msg)
@@ -229,7 +250,7 @@ func (m Model) updateRepos(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			}
 			selected = []string{m.repoNames[idx]}
 		}
-		plan, err := m.eng.BuildPlan(context.Background(), m.project, selected)
+		plan, err := m.eng.BuildPlan(m.runContext(), m.project, selected)
 		if err != nil {
 			m.err = err
 			m.state = StateDone
@@ -262,7 +283,7 @@ func (m Model) updateConfirm(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 // runPlanMsg executes the plan synchronously and returns the results
 // message; the confirm handler wraps it in a tea.Cmd.
 func (m Model) runPlanMsg() tea.Msg {
-	results := m.eng.Execute(context.Background(), m.plan, nil)
+	results := m.eng.Execute(m.runContext(), m.plan, nil)
 	return resultsMsg(results)
 }
 
@@ -313,7 +334,7 @@ func (m Model) View() string {
 		b.WriteString(dimStyle.Render("y confirm · n back"))
 		return b.String()
 	case StateRunning:
-		return "creating worktrees..."
+		return "creating worktrees...\n" + dimStyle.Render("ctrl+c cancel")
 	case StateDone:
 		var b strings.Builder
 		if m.err != nil {
@@ -347,6 +368,9 @@ func Run(eng Engine, sc Scanner) (Model, error) {
 	if err != nil {
 		return Model{}, err
 	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	m.ctx, m.cancel = ctx, cancel
 	p := tea.NewProgram(m, tea.WithAltScreen())
 	final, err := p.Run()
 	if err != nil {

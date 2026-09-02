@@ -10,7 +10,9 @@ import (
 	"io/fs"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 
 	"github.com/tpabla/treework/internal/cli"
 	"github.com/tpabla/treework/internal/config"
@@ -111,7 +113,10 @@ func run(args []string) error {
 			return cmd.Run()
 		},
 	}
-	return app.Run(context.Background(), args)
+	// Ctrl-C cancels in-flight git work instead of orphaning it.
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	return app.Run(ctx, args)
 }
 
 func openAuditLog() (*os.File, error) {
