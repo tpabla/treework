@@ -11,9 +11,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/taranpabla/treework/internal/config"
-	"github.com/taranpabla/treework/internal/gitx"
-	"github.com/taranpabla/treework/internal/scan"
+	"github.com/tpabla/treework/internal/config"
+	"github.com/tpabla/treework/internal/gitx"
+	"github.com/tpabla/treework/internal/scan"
 )
 
 // ErrDirty is returned when a removal would discard uncommitted changes.

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/taranpabla/treework/internal/config"
+	"github.com/tpabla/treework/internal/config"
 )
 
 func setupKey(m SetupModel, k string) SetupModel {

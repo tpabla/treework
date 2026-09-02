@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/taranpabla/treework/internal/config"
-	"github.com/taranpabla/treework/internal/gitx"
+	"github.com/tpabla/treework/internal/config"
+	"github.com/tpabla/treework/internal/gitx"
 )
 
 func git(t *testing.T, dir string, args ...string) string {

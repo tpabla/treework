@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/taranpabla/treework/internal/gitx"
+	"github.com/tpabla/treework/internal/gitx"
 )
 
 // attach fakes an attached repo: a project subdir with a .git file.

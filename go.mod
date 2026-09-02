@@ -1,4 +1,4 @@
-module github.com/taranpabla/treework
+module github.com/tpabla/treework
 
 go 1.24.4
 

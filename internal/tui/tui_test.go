@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/taranpabla/treework/internal/engine"
+	"github.com/tpabla/treework/internal/engine"
 )
 
 type fakeEngine struct {

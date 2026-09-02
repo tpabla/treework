@@ -7,7 +7,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/taranpabla/treework/internal/config"
+	"github.com/tpabla/treework/internal/config"
 )
 
 type setupField struct {

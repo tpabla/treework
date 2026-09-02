@@ -12,8 +12,8 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/taranpabla/treework/internal/config"
-	"github.com/taranpabla/treework/internal/engine"
+	"github.com/tpabla/treework/internal/config"
+	"github.com/tpabla/treework/internal/engine"
 )
 
 // Engine is the subset of engine.Engine the TUI needs.

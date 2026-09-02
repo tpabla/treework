@@ -10,7 +10,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/taranpabla/treework/internal/engine"
+	"github.com/tpabla/treework/internal/engine"
 )
 
 // Engine is the subset of engine.Engine the CLI needs (injected for tests).
