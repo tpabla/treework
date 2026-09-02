@@ -1,0 +1,42 @@
+version: 2
+project_name: treework
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: treework
+    main: ./cmd/treework
+    binary: treework
+    env:
+      - CGO_ENABLED=0
+    goos: [darwin, linux]
+    goarch: [amd64, arm64]
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+
+checksum:
+  name_template: checksums.txt
+
+# release-please owns the changelog.
+changelog:
+  disable: true
+
+homebrew_casks:
+  - name: treework
+    repository:
+      owner: tpabla
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: https://github.com/tpabla/treework
+    description: Create and manage git worktrees for cross-repo feature development
+    license: MIT
+    # The binaries are unsigned, so strip the quarantine flag Gatekeeper
+    # would otherwise apply to a downloaded executable.
+    hooks:
+      post:
+        install: |
+          if system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/treework"]
+          end
